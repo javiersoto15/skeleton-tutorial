@@ -1,30 +1,24 @@
-FROM artifactory-rco.centene.com/pots_docker_production_local_rco/centene/golang:1.16.2-stretch AS builder
-
- # Make Tag
-ARG tag
-ENV TAG $tag
-
-LABEL maintainer="CLAIMS RTR Support <CLAIMS_RTR_Support@CENTENE.COM>"
+FROM golang:1.17-alpine3.15 AS builder
 
 ENV GO111MODULE=on 
 
-WORKDIR /go/src/gitlab.centene.com/rtr/claims/api/rtr-claims-hybrid-wrapper
+WORKDIR /go/src/github.com/javiersoto15/skeleton-tutorial
  
 COPY . .
 
 ENV TZ America/Chicago
 
-EXPOSE 8080
+#dependencies
+RUN go mod tidy 
 
-WORKDIR /go/src/gitlab.centene.com/rtr/claims/api/rtr-claims-hybrid-wrapper/cmd/claims-wrapper
+WORKDIR /go/src/github.com/javiersoto15/skeleton-tutorial/cmd/tutorial
  
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o app .
+RUN GOOS=linux go build -a -installsuffix cgo -o app .
 
 
 #Second stage for a smaller image
-FROM artifactory-rco.centene.com/pots_docker_production_virtual_rco/centene/alpine:3.13
+FROM alpine:3.15
 RUN apk --no-cache add ca-certificates
 WORKDIR /root/
-EXPOSE 8080
-COPY --from=builder /go/src/gitlab.centene.com/rtr/claims/api/rtr-claims-hybrid-wrapper/cmd/claims-wrapper/app .
+COPY --from=builder /go/src/github.com/javiersoto15/skeleton-tutorial/cmd/tutorial/app .
 CMD ["./app"]
